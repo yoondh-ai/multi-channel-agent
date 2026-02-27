@@ -1,6 +1,6 @@
 """채널별 콘텐츠 생성 모듈"""
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 import os
 
 class ContentGenerator:

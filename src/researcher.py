@@ -1,6 +1,6 @@
 """웹 리서치 및 트렌드 분석 모듈"""
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 import os
 
 class ContentResearcher:
