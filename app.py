@@ -13,6 +13,14 @@ st.set_page_config(
     layout="wide"
 )
 
+# 세션 상태 초기화
+if 'generated_content' not in st.session_state:
+    st.session_state.generated_content = None
+if 'research_data' not in st.session_state:
+    st.session_state.research_data = None
+if 'selected_channels' not in st.session_state:
+    st.session_state.selected_channels = []
+
 st.title("🚀 멀티채널 자동 포스팅 에이전트")
 st.markdown("**보안 기술을 트렌디한 콘텐츠로 변환하여 자동 포스팅**")
 
@@ -54,8 +62,8 @@ with col2:
     post_to_blog = st.checkbox("블로그 (Medium)", value=True)
     post_to_twitter = st.checkbox("트위터 (X)", value=True)
 
-# 생성 버튼
-if st.button("🎨 콘텐츠 생성 및 포스팅", type="primary", use_container_width=True):
+# 1단계: 콘텐츠 생성 버튼
+if st.button("🎨 콘텐츠 생성", type="primary", use_container_width=True):
     if not keywords or not direction:
         st.error("키워드와 작성 방향을 모두 입력해주세요")
     elif not openai_key:
@@ -70,48 +78,111 @@ if st.button("🎨 콘텐츠 생성 및 포스팅", type="primary", use_containe
         if not channels:
             st.warning("최소 하나의 채널을 선택하세요")
         else:
-            with st.spinner("🤖 AI 에이전트가 작업 중입니다..."):
+            with st.spinner("🤖 AI 에이전트가 콘텐츠를 생성하고 있습니다..."):
                 try:
                     agent = MultiChannelAgent()
-                    results = agent.create_and_post(keywords, direction, channels)
+                    results = agent.create_content_only(keywords, direction, channels)
                     
-                    st.success("✅ 작업 완료!")
+                    # 세션 상태에 저장
+                    st.session_state.generated_content = results["content"]
+                    st.session_state.research_data = results["research"]
+                    st.session_state.selected_channels = channels
                     
-                    # 결과 표시
-                    st.markdown("---")
-                    st.header("📊 생성된 콘텐츠")
-                    
-                    # 리서치 결과
-                    with st.expander("🔍 리서치 결과", expanded=False):
-                        st.write(results["research"]["raw_research"])
-                    
-                    # 블로그 콘텐츠
-                    if "blog" in results["content"]:
-                        st.subheader("📝 블로그 포스트")
-                        st.markdown(f"**제목:** {results['content']['blog']['title']}")
-                        st.markdown(results["content"]["blog"]["content"])
-                        
-                        if "blog" in results["posts"]:
-                            if results["posts"]["blog"]["success"]:
-                                st.success(results["posts"]["blog"]["message"])
-                            else:
-                                st.info(results["posts"]["blog"]["message"])
-                    
-                    # 트위터 콘텐츠
-                    if "twitter" in results["content"]:
-                        st.subheader("🐦 트위터 스레드")
-                        for i, tweet in enumerate(results["content"]["twitter"]["tweets"], 1):
-                            st.text_area(f"트윗 {i}", tweet, height=100, key=f"tweet_{i}")
-                        
-                        if "twitter" in results["posts"]:
-                            if results["posts"]["twitter"]["success"]:
-                                st.success(results["posts"]["twitter"]["message"])
-                            else:
-                                st.info(results["posts"]["twitter"]["message"])
+                    st.success("✅ 콘텐츠 생성 완료! 아래에서 검수 후 포스팅하세요.")
+                    st.rerun()
                 
                 except Exception as e:
                     st.error(f"오류 발생: {str(e)}")
                     st.exception(e)
+
+# 2단계: 생성된 콘텐츠 표시 및 검수
+if st.session_state.generated_content:
+    st.markdown("---")
+    st.header("📊 생성된 콘텐츠 (검수)")
+    
+    # 리서치 결과
+    with st.expander("🔍 리서치 결과", expanded=False):
+        st.write(st.session_state.research_data["raw_research"])
+    
+    # 블로그 콘텐츠
+    if "blog" in st.session_state.generated_content:
+        st.subheader("📝 블로그 포스트")
+        
+        # 편집 가능한 제목
+        edited_blog_title = st.text_input(
+            "제목",
+            value=st.session_state.generated_content["blog"]["title"],
+            key="blog_title_edit"
+        )
+        
+        # 편집 가능한 본문
+        edited_blog_content = st.text_area(
+            "본문",
+            value=st.session_state.generated_content["blog"]["content"],
+            height=400,
+            key="blog_content_edit"
+        )
+        
+        # 수정사항 저장
+        st.session_state.generated_content["blog"]["title"] = edited_blog_title
+        st.session_state.generated_content["blog"]["content"] = edited_blog_content
+    
+    # 트위터 콘텐츠
+    if "twitter" in st.session_state.generated_content:
+        st.subheader("🐦 트위터 스레드")
+        
+        edited_tweets = []
+        for i, tweet in enumerate(st.session_state.generated_content["twitter"]["tweets"], 1):
+            edited_tweet = st.text_area(
+                f"트윗 {i}",
+                value=tweet,
+                height=100,
+                key=f"tweet_edit_{i}"
+            )
+            edited_tweets.append(edited_tweet)
+        
+        # 수정사항 저장
+        st.session_state.generated_content["twitter"]["tweets"] = edited_tweets
+    
+    # 3단계: 포스팅 버튼
+    st.markdown("---")
+    col_post1, col_post2, col_post3 = st.columns([1, 1, 1])
+    
+    with col_post1:
+        if st.button("✅ 검수 완료 - 포스팅 실행", type="primary", use_container_width=True):
+            with st.spinner("📤 포스팅 중..."):
+                try:
+                    agent = MultiChannelAgent()
+                    post_results = agent.post_content(
+                        st.session_state.generated_content,
+                        st.session_state.selected_channels
+                    )
+                    
+                    st.success("🎉 포스팅 완료!")
+                    
+                    # 포스팅 결과 표시
+                    for channel, result in post_results.items():
+                        if result["success"]:
+                            st.success(f"{channel}: {result['message']}")
+                        else:
+                            st.info(f"{channel}: {result['message']}")
+                    
+                except Exception as e:
+                    st.error(f"포스팅 오류: {str(e)}")
+    
+    with col_post2:
+        if st.button("🔄 다시 생성", use_container_width=True):
+            st.session_state.generated_content = None
+            st.session_state.research_data = None
+            st.session_state.selected_channels = []
+            st.rerun()
+    
+    with col_post3:
+        if st.button("❌ 취소", use_container_width=True):
+            st.session_state.generated_content = None
+            st.session_state.research_data = None
+            st.session_state.selected_channels = []
+            st.rerun()
 
 # 사용 가이드
 with st.expander("📖 사용 가이드"):

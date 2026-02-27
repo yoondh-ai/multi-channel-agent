@@ -10,13 +10,12 @@ class MultiChannelAgent:
         self.twitter_publisher = TwitterPublisher()
         self.blog_publisher = BlogPublisher()
     
-    def create_and_post(self, keywords: str, direction: str, channels: list) -> dict:
-        """콘텐츠 생성 및 포스팅 전체 프로세스"""
+    def create_content_only(self, keywords: str, direction: str, channels: list) -> dict:
+        """콘텐츠 생성만 수행 (포스팅 제외)"""
         
         results = {
             "research": None,
-            "content": {},
-            "posts": {}
+            "content": {}
         }
         
         # 1. 리서치
@@ -35,20 +34,46 @@ class MultiChannelAgent:
             twitter_content = self.generator.generate_twitter_thread(research_data)
             results["content"]["twitter"] = twitter_content
         
-        # 3. 포스팅
+        return results
+    
+    def post_content(self, content: dict, channels: list) -> dict:
+        """생성된 콘텐츠를 포스팅"""
+        
+        results = {}
+        
         print("📤 포스팅 중...")
         
-        if "blog" in channels and "blog" in results["content"]:
+        if "blog" in channels and "blog" in content:
             blog_result = self.blog_publisher.post_to_medium(
-                results["content"]["blog"]["title"],
-                results["content"]["blog"]["content"]
+                content["blog"]["title"],
+                content["blog"]["content"]
             )
-            results["posts"]["blog"] = blog_result
+            results["blog"] = blog_result
         
-        if "twitter" in channels and "twitter" in results["content"]:
+        if "twitter" in channels and "twitter" in content:
             twitter_result = self.twitter_publisher.post_thread(
-                results["content"]["twitter"]["tweets"]
+                content["twitter"]["tweets"]
             )
-            results["posts"]["twitter"] = twitter_result
+            results["twitter"] = twitter_result
+        
+        return results
+    
+    def create_and_post(self, keywords: str, direction: str, channels: list) -> dict:
+        """콘텐츠 생성 및 포스팅 전체 프로세스 (기존 호환성 유지)"""
+        
+        results = {
+            "research": None,
+            "content": {},
+            "posts": {}
+        }
+        
+        # 1. 콘텐츠 생성
+        content_results = self.create_content_only(keywords, direction, channels)
+        results["research"] = content_results["research"]
+        results["content"] = content_results["content"]
+        
+        # 2. 포스팅
+        post_results = self.post_content(content_results["content"], channels)
+        results["posts"] = post_results
         
         return results
