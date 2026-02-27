@@ -1,7 +1,13 @@
 """각 플랫폼 퍼블리셔 모듈"""
 import os
-import tweepy
 from typing import List
+
+# Twitter API는 선택적으로 import
+try:
+    import tweepy
+    TWEEPY_AVAILABLE = True
+except ImportError:
+    TWEEPY_AVAILABLE = False
 
 class TwitterPublisher:
     def __init__(self):
@@ -11,6 +17,9 @@ class TwitterPublisher:
         self.access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
         
         self.client = None
+        if not TWEEPY_AVAILABLE:
+            return
+            
         if all([self.api_key, self.api_secret, self.access_token, self.access_token_secret]):
             try:
                 self.client = tweepy.Client(
@@ -24,10 +33,17 @@ class TwitterPublisher:
     
     def post_thread(self, tweets: List[str]) -> dict:
         """트위터 스레드 포스팅"""
+        if not TWEEPY_AVAILABLE:
+            return {
+                "success": False,
+                "message": "Twitter API 라이브러리가 설치되지 않았습니다 (미리보기 모드)",
+                "preview": tweets
+            }
+        
         if not self.client:
             return {
                 "success": False,
-                "message": "Twitter API 설정이 필요합니다",
+                "message": "Twitter API 설정이 필요합니다 (미리보기 모드)",
                 "preview": tweets
             }
         
