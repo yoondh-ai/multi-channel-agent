@@ -66,8 +66,6 @@ with col2:
 if st.button("🎨 콘텐츠 생성", type="primary", use_container_width=True):
     if not keywords or not direction:
         st.error("키워드와 작성 방향을 모두 입력해주세요")
-    elif not openai_key:
-        st.error("OpenAI API 키가 설정되지 않았습니다. .env 파일을 확인하세요")
     else:
         channels = []
         if post_to_blog:
@@ -78,10 +76,16 @@ if st.button("🎨 콘텐츠 생성", type="primary", use_container_width=True):
         if not channels:
             st.warning("최소 하나의 채널을 선택하세요")
         else:
+            # API 키 확인 및 모드 결정
+            use_mock = not openai_key
+            
+            if use_mock:
+                st.info("ℹ️ 데모 모드: OpenAI API 키가 없어 샘플 콘텐츠를 생성합니다.")
+            
             with st.spinner("🤖 AI 에이전트가 콘텐츠를 생성하고 있습니다..."):
                 try:
                     agent = MultiChannelAgent()
-                    results = agent.create_content_only(keywords, direction, channels)
+                    results = agent.create_content_only(keywords, direction, channels, use_mock=use_mock)
                     
                     # 세션 상태에 저장
                     st.session_state.generated_content = results["content"]
