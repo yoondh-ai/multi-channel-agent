@@ -5,14 +5,26 @@ import os
 
 class ContentGenerator:
     def __init__(self):
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.8,
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
+        api_key = os.getenv("OPENAI_API_KEY")
+        if api_key:
+            self.llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0.8,
+                api_key=api_key
+            )
+        else:
+            self.llm = None
     
     def generate_blog_post(self, research_data: dict) -> dict:
         """블로그 포스트 생성"""
+        
+        if not self.llm:
+            # API 키가 없으면 기본 콘텐츠 반환
+            return {
+                "title": "샘플 블로그 포스트",
+                "content": "API 키를 설정하면 실제 AI 콘텐츠가 생성됩니다.",
+                "platform": "blog"
+            }
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", """당신은 B2B 보안 분야의 전문 콘텐츠 작가입니다.
@@ -50,6 +62,13 @@ class ContentGenerator:
     
     def generate_twitter_thread(self, research_data: dict) -> dict:
         """트위터 스레드 생성"""
+        
+        if not self.llm:
+            # API 키가 없으면 기본 콘텐츠 반환
+            return {
+                "tweets": ["샘플 트윗입니다. API 키를 설정하면 실제 AI 콘텐츠가 생성됩니다."],
+                "platform": "twitter"
+            }
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", """당신은 소셜미디어 마케팅 전문가입니다.

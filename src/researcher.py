@@ -5,14 +5,26 @@ import os
 
 class ContentResearcher:
     def __init__(self):
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.7,
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
+        api_key = os.getenv("OPENAI_API_KEY")
+        if api_key:
+            self.llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0.7,
+                api_key=api_key
+            )
+        else:
+            self.llm = None
     
     def research_topic(self, keywords: str, direction: str) -> dict:
         """키워드와 방향성을 기반으로 콘텐츠 리서치"""
+        
+        if not self.llm:
+            # API 키가 없으면 기본 리서치 데이터 반환
+            return {
+                "raw_research": f"키워드: {keywords}\n방향성: {direction}",
+                "keywords": keywords,
+                "direction": direction
+            }
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", """당신은 B2B 보안 마케팅 전문가입니다. 
