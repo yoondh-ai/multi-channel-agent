@@ -16,7 +16,7 @@ class AdvancedContentGenerator:
             try:
                 from langchain_groq import ChatGroq
                 self.llm = ChatGroq(
-                    model="llama-3.1-70b-versatile",
+                    model="llama-3.3-70b-versatile",
                     temperature=0.8,
                     groq_api_key=groq_key
                 )

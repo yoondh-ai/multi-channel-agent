@@ -39,7 +39,7 @@
 **왜 Groq인가?**
 - ✅ 완전 무료 (신용카드 불필요)
 - ✅ 초고속 (초당 500+ 토큰)
-- ✅ Llama 3.1 70B 모델
+- ✅ Llama 3.3 70B 모델 (최신!)
 - ✅ 안정적 (404 오류 없음)
 
 자세한 가이드: [GROQ_SETUP_GUIDE.md](GROQ_SETUP_GUIDE.md)
