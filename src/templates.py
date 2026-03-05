@@ -1,5 +1,39 @@
 """콘텐츠 템플릿 및 설정"""
 
+# 마케팅 프레임워크
+MARKETING_FRAMEWORKS = {
+    "PAS": {
+        "name": "PAS (Problem-Agitate-Solution)",
+        "description": "문제 제기 → 고통 증폭 → 해결책 제시",
+        "structure": ["문제 정의", "문제 심화", "해결책 제시"],
+        "best_for": "제품 소개, 랜딩 페이지"
+    },
+    "AIDA": {
+        "name": "AIDA (Attention-Interest-Desire-Action)",
+        "description": "주목 → 관심 → 욕구 → 행동",
+        "structure": ["주목 끌기", "관심 유발", "욕구 자극", "행동 유도"],
+        "best_for": "광고, 이메일 마케팅"
+    },
+    "BAB": {
+        "name": "BAB (Before-After-Bridge)",
+        "description": "현재 상황 → 이상적 상황 → 연결 방법",
+        "structure": ["현재 상황", "개선된 미래", "해결 방법"],
+        "best_for": "사례 연구, 변화 스토리"
+    },
+    "FAB": {
+        "name": "FAB (Features-Advantages-Benefits)",
+        "description": "기능 → 장점 → 혜택",
+        "structure": ["제품 기능", "경쟁 우위", "고객 혜택"],
+        "best_for": "제품 설명, 기술 문서"
+    },
+    "4P": {
+        "name": "4P (Picture-Promise-Prove-Push)",
+        "description": "그림 → 약속 → 증명 → 촉구",
+        "structure": ["비전 제시", "약속 선언", "증거 제공", "행동 촉구"],
+        "best_for": "세일즈 레터, 프레젠테이션"
+    }
+}
+
 CONTENT_TEMPLATES = {
     "blog_post": {
         "name": "블로그 포스트",
