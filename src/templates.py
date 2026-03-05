@@ -156,19 +156,16 @@ AUDIENCE_OPTIONS = {
 }
 
 LENGTH_MAPPING = {
-    "짧게": {
-        "blog": 800,
-        "email": 300,
-        "social": 100
+    "짧게 (100자 미만)": {
+        "target": 100,
+        "description": "간결한 메시지, SNS 최적화"
     },
-    "보통": {
-        "blog": 1500,
-        "email": 600,
-        "social": 200
+    "보통 (100-500자)": {
+        "target": 300,
+        "description": "적당한 길이, 대부분의 채널에 적합"
     },
-    "길게": {
-        "blog": 2500,
-        "email": 1000,
-        "social": 300
+    "길게 (500자 이상)": {
+        "target": 800,
+        "description": "상세한 설명, 블로그/이메일 최적화"
     }
 }
