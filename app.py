@@ -20,9 +20,9 @@ st.set_page_config(
 # 커스텀 CSS
 st.markdown("""
 <style>
-    /* 전체 컨테이너 패딩 최소화 */
+    /* 모든 상단 여백 강제 제거 */
     .main .block-container {
-        padding-top: 1rem;
+        padding-top: 0rem !important;
         padding-left: 1rem;
         padding-right: 1rem;
         padding-bottom: 1rem;
@@ -36,7 +36,8 @@ st.markdown("""
         border-radius: 10px;
         color: white;
         text-align: center;
-        margin-bottom: 1rem;
+        margin-top: 0 !important;
+        margin-bottom: 0.5rem !important;
     }
     
     /* 왼쪽 패널 */
@@ -44,7 +45,7 @@ st.markdown("""
         background: #f8f9fa;
         padding: 1.5rem;
         border-radius: 10px;
-        height: calc(100vh - 150px);
+        height: calc(100vh - 120px);
         overflow-y: auto;
     }
     
@@ -54,7 +55,7 @@ st.markdown("""
         padding: 2rem;
         border-radius: 10px;
         border: 1px solid #e0e0e0;
-        min-height: calc(100vh - 150px);
+        min-height: calc(100vh - 120px);
     }
     
     /* 섹션 구분선 */
@@ -68,18 +69,29 @@ st.markdown("""
         border-radius: 8px;
     }
     
-    /* Streamlit 기본 여백 제거 */
+    /* Streamlit 기본 여백 완전 제거 */
     .element-container {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.5rem !important;
     }
     
-    /* 상단 여백 제거 */
-    header {
-        background-color: transparent !important;
+    /* 상단 헤더 영역 제거 */
+    header[data-testid="stHeader"] {
+        display: none;
     }
     
-    /* 불필요한 공백 제거 */
+    /* 메인 영역 상단 패딩 제거 */
+    .main {
+        padding-top: 0 !important;
+    }
+    
+    /* 첫 번째 div 여백 제거 */
     .main > div:first-child {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* 모든 상단 여백 제거 */
+    div[data-testid="stVerticalBlock"] > div:first-child {
         padding-top: 0 !important;
     }
 </style>
