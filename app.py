@@ -43,9 +43,9 @@ st.markdown("""
     /* 왼쪽 패널 */
     .left-panel {
         background: #f8f9fa;
-        padding: 1.5rem;
+        padding: 1rem;
         border-radius: 10px;
-        height: calc(100vh - 120px);
+        height: calc(100vh - 180px);
         overflow-y: auto;
         margin-top: 0 !important;
     }
@@ -53,10 +53,10 @@ st.markdown("""
     /* 오른쪽 콘텐츠 영역 */
     .content-area {
         background: white;
-        padding: 2rem;
+        padding: 1.5rem;
         border-radius: 10px;
         border: 1px solid #e0e0e0;
-        min-height: calc(100vh - 120px);
+        min-height: calc(100vh - 180px);
         margin-top: 0 !important;
     }
     
@@ -132,22 +132,26 @@ if 'brand_name' not in st.session_state:
 if 'brand_values' not in st.session_state:
     st.session_state.brand_values = "혁신, 신뢰, 보안"
 
-# 헤더
-st.markdown("""
-<div class="main-header">
-    <h1>✨ AI 마케팅 콘텐츠 생성 플랫폼</h1>
-    <p>보안 기술을 고객의 마음을 사로잡는 마케팅 콘텐츠로 변환</p>
-</div>
-""", unsafe_allow_html=True)
-
 # API 상태
 openai_key = os.getenv("OPENAI_API_KEY")
 
 # 메인 레이아웃: 왼쪽 1/4, 오른쪽 3/4
-left_col, right_col = st.columns([1, 3])
+left_col, right_col = st.columns([1, 3], gap="small")
 
 # ========== 왼쪽: 입력 패널 ==========
 with left_col:
+    # 헤더를 왼쪽 컬럼 상단에 배치
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                padding: 1rem; 
+                border-radius: 10px; 
+                color: white; 
+                text-align: center;
+                margin-bottom: 1rem;">
+        <h3 style="margin: 0;">✨ AI 마케팅 콘텐츠</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.markdown('<div class="left-panel">', unsafe_allow_html=True)
     
     # 1. 템플릿 선택
@@ -338,6 +342,19 @@ with left_col:
 
 # ========== 오른쪽: 결과 패널 ==========
 with right_col:
+    # 헤더를 오른쪽 컬럼 상단에 배치
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                padding: 1rem; 
+                border-radius: 10px; 
+                color: white; 
+                text-align: center;
+                margin-bottom: 1rem;">
+        <h3 style="margin: 0;">생성 플랫폼</h3>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">보안 기술을 고객의 마음을 사로잡는 마케팅 콘텐츠로 변환</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.markdown('<div class="content-area">', unsafe_allow_html=True)
     
     if not st.session_state.generated_contents:
