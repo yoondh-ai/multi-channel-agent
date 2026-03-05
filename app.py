@@ -37,7 +37,7 @@ st.markdown("""
         color: white;
         text-align: center;
         margin-top: 0 !important;
-        margin-bottom: 0.5rem !important;
+        margin-bottom: 0rem !important;
     }
     
     /* 왼쪽 패널 */
@@ -47,6 +47,7 @@ st.markdown("""
         border-radius: 10px;
         height: calc(100vh - 120px);
         overflow-y: auto;
+        margin-top: 0 !important;
     }
     
     /* 오른쪽 콘텐츠 영역 */
@@ -56,6 +57,7 @@ st.markdown("""
         border-radius: 10px;
         border: 1px solid #e0e0e0;
         min-height: calc(100vh - 120px);
+        margin-top: 0 !important;
     }
     
     /* 섹션 구분선 */
@@ -72,6 +74,7 @@ st.markdown("""
     /* Streamlit 기본 여백 완전 제거 */
     .element-container {
         margin-bottom: 0.5rem !important;
+        margin-top: 0 !important;
     }
     
     /* 상단 헤더 영역 제거 */
@@ -92,6 +95,26 @@ st.markdown("""
     
     /* 모든 상단 여백 제거 */
     div[data-testid="stVerticalBlock"] > div:first-child {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* 컬럼 간격 제거 */
+    div[data-testid="column"] {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* 수평 블록 여백 제거 */
+    div[data-testid="stHorizontalBlock"] {
+        gap: 1rem !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* 모든 div 상단 여백 제거 */
+    .stMarkdown {
+        margin-top: 0 !important;
         padding-top: 0 !important;
     }
 </style>
