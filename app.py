@@ -85,8 +85,6 @@ st.markdown("""
 
 # API 상태
 openai_key = os.getenv("OPENAI_API_KEY")
-if not openai_key:
-    st.info("ℹ️ 데모 모드: 샘플 콘텐츠를 생성합니다")
 
 # 메인 레이아웃: 왼쪽 1/4, 오른쪽 3/4
 left_col, right_col = st.columns([1, 3])
@@ -168,6 +166,62 @@ with left_col:
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     
+    # 7. 레퍼런스 학습
+    st.subheader("6️⃣ 레퍼런스 학습")
+    
+    use_reference = st.checkbox("기존 콘텐츠 스타일 참고", value=False)
+    
+    reference_source = None
+    reference_url = None
+    reference_text = None
+    
+    if use_reference:
+        reference_type = st.radio(
+            "참고 소스",
+            ["우리 회사 콘텐츠", "경쟁사/업계 리더 콘텐츠", "직접 입력"],
+            horizontal=True
+        )
+        
+        if reference_type == "우리 회사 콘텐츠":
+            st.caption("자사 블로그/SNS의 톤앤매너를 학습합니다")
+            reference_url = st.text_input(
+                "블로그/SNS URL",
+                placeholder="예: https://blog.markany.com/...",
+                help="분석할 콘텐츠의 URL을 입력하세요"
+            )
+            reference_source = "company"
+            
+        elif reference_type == "경쟁사/업계 리더 콘텐츠":
+            st.caption("벤치마킹할 기업의 스타일을 학습합니다")
+            
+            col_ref1, col_ref2 = st.columns(2)
+            with col_ref1:
+                competitor_name = st.text_input(
+                    "기업명",
+                    placeholder="예: Palo Alto Networks"
+                )
+            with col_ref2:
+                reference_url = st.text_input(
+                    "콘텐츠 URL",
+                    placeholder="블로그/SNS 링크"
+                )
+            reference_source = f"competitor:{competitor_name}"
+            
+        else:  # 직접 입력
+            st.caption("참고할 콘텐츠를 직접 붙여넣으세요")
+            reference_text = st.text_area(
+                "레퍼런스 텍스트",
+                placeholder="참고할 콘텐츠를 붙여넣으세요 (최대 1000자)",
+                height=150,
+                max_chars=1000
+            )
+            reference_source = "manual"
+        
+        if reference_url or reference_text:
+            st.info("💡 AI가 이 콘텐츠의 톤, 문체, 구조를 분석하여 유사한 스타일로 생성합니다")
+    
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    
     # 생성 버튼
     if st.button("✨ 콘텐츠 생성", type="primary", use_container_width=True):
         if not selected_template:
@@ -188,7 +242,11 @@ with left_col:
                         "include_cta": include_cta,
                         "include_seo": include_seo,
                         "brand_name": brand_name,
-                        "brand_values": brand_values
+                        "brand_values": brand_values,
+                        "use_reference": use_reference,
+                        "reference_source": reference_source,
+                        "reference_url": reference_url,
+                        "reference_text": reference_text
                     }
                     
                     agent = MarketingContentAgent()
@@ -227,8 +285,8 @@ with right_col:
     
     if not st.session_state.generated_contents:
         st.markdown("""
-        <div style="text-align: center; padding: 4rem 2rem; color: #999;">
-            <h2>👈 왼쪽에서 설정 후<br/>콘텐츠를 생성하세요</h2>
+        <div style="text-align: center; padding: 8rem 2rem; color: #999;">
+            <h2>👈 왼쪽에서 설정 후 콘텐츠를 생성하세요</h2>
             <p style="margin-top: 1rem;">AI가 여러 버전을 자동 생성합니다</p>
         </div>
         """, unsafe_allow_html=True)

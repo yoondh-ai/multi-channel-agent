@@ -36,6 +36,19 @@ SEO 최적화: {config.get('include_seo', True)}
 버전: {variant + 1}
 """
         
+        # 레퍼런스 정보 추가
+        if config.get('reference_data'):
+            ref_data = config['reference_data']
+            base_context += f"""
+
+레퍼런스 학습:
+- 소스: {ref_data['source']}
+- 스타일 분석: {ref_data['analysis'].get('analysis', '분석 정보 없음')}
+- 참고 텍스트 샘플: {ref_data['text'][:300]}...
+
+위 레퍼런스의 톤, 문체, 구조를 참고하여 유사한 스타일로 작성하세요.
+"""
+        
         if template == "blog_post":
             return self._generate_blog_post(base_context, research_data)
         elif template == "twitter_thread":

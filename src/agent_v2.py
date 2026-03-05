@@ -2,6 +2,7 @@
 from .researcher import ContentResearcher
 from .content_generator_v2 import AdvancedContentGenerator
 from .publishers import TwitterPublisher, BlogPublisher
+from .reference_analyzer import ReferenceAnalyzer
 
 class MarketingContentAgent:
     def __init__(self):
@@ -9,12 +10,20 @@ class MarketingContentAgent:
         self.generator = AdvancedContentGenerator()
         self.twitter_publisher = TwitterPublisher()
         self.blog_publisher = BlogPublisher()
+        self.reference_analyzer = ReferenceAnalyzer()
     
     def generate_content(self, template: str, config: dict, use_mock: bool = False) -> list:
         """템플릿과 설정에 따라 여러 버전의 콘텐츠 생성"""
         
         variants = config.get('variants', 3)
         contents = []
+        
+        # 레퍼런스 분석
+        reference_data = None
+        if config.get('use_reference'):
+            reference_data = self.reference_analyzer.get_reference_data(config)
+            if reference_data:
+                config['reference_data'] = reference_data
         
         if use_mock:
             # 데모 모드: 샘플 콘텐츠 생성
