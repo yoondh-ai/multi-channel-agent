@@ -142,25 +142,36 @@ with left_col:
         "🎯 광고": ["google_ads", "social_ads"]
     }
     
-    selected_template = None
+    # 라디오 버튼으로 템플릿 선택
+    all_templates = []
+    template_labels = {}
+    
     for category, templates in template_categories.items():
-        with st.expander(category, expanded=(category == "📝 블로그")):
-            for template_key in templates:
-                template_info = CONTENT_TEMPLATES[template_key]
-                if st.button(
-                    f"{template_info['name']}",
-                    key=f"tmpl_{template_key}",
-                    help=template_info['description'],
-                    use_container_width=True
-                ):
-                    st.session_state.selected_template = template_key
-                    selected_template = template_key
+        for template_key in templates:
+            template_info = CONTENT_TEMPLATES[template_key]
+            label = f"{category.split()[0]} {template_info['name']}"
+            all_templates.append(template_key)
+            template_labels[template_key] = label
     
-    if not selected_template and st.session_state.selected_template:
-        selected_template = st.session_state.selected_template
+    # 현재 선택된 템플릿의 인덱스 찾기
+    current_index = 0
+    if st.session_state.selected_template in all_templates:
+        current_index = all_templates.index(st.session_state.selected_template)
     
+    selected_template = st.radio(
+        "템플릿 선택",
+        options=all_templates,
+        format_func=lambda x: template_labels[x],
+        index=current_index,
+        label_visibility="collapsed"
+    )
+    
+    st.session_state.selected_template = selected_template
+    
+    # 선택된 템플릿 정보 표시
     if selected_template:
-        st.success(f"✅ {CONTENT_TEMPLATES[selected_template]['name']}")
+        template_info = CONTENT_TEMPLATES[selected_template]
+        st.info(f"**{template_info['name']}**\n\n{template_info['description']}")
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     
