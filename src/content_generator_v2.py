@@ -3,14 +3,29 @@ import os
 
 class AdvancedContentGenerator:
     def __init__(self):
-        # OpenAI 또는 Gemini 선택
+        # Groq (무료) > Gemini > OpenAI 순서로 시도
         self.api_provider = None
         self.llm = None
         
+        groq_key = os.getenv("GROQ_API_KEY")
         gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
         openai_key = os.getenv("OPENAI_API_KEY")
         
-        if gemini_key:
+        # Groq 시도 (무료, 빠름)
+        if groq_key:
+            try:
+                from langchain_groq import ChatGroq
+                self.llm = ChatGroq(
+                    model="llama-3.1-70b-versatile",
+                    temperature=0.8,
+                    groq_api_key=groq_key
+                )
+                self.api_provider = "groq"
+            except Exception as e:
+                print(f"Groq 초기화 실패: {e}")
+        
+        # Gemini 시도
+        if not self.llm and gemini_key:
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 self.llm = ChatGoogleGenerativeAI(
@@ -23,6 +38,7 @@ class AdvancedContentGenerator:
             except Exception as e:
                 print(f"Gemini 초기화 실패: {e}")
         
+        # OpenAI 시도
         if not self.llm and openai_key:
             try:
                 from langchain_openai import ChatOpenAI

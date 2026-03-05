@@ -125,6 +125,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # API 상태
+groq_key = os.getenv("GROQ_API_KEY")
 openai_key = os.getenv("OPENAI_API_KEY")
 gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 
@@ -132,7 +133,11 @@ gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 api_key_valid = False
 api_provider = None
 
-if gemini_key:
+if groq_key:
+    api_key_valid = True
+    api_provider = "Groq (무료)"
+    st.success("✅ Groq AI 연결됨 - 무료로 실제 콘텐츠 생성 가능!")
+elif gemini_key:
     api_key_valid = True
     api_provider = "Gemini"
     st.success("✅ Gemini AI 연결됨 - 실제 콘텐츠 생성 가능")
@@ -148,9 +153,30 @@ else:
     st.warning("⚠️ 데모 모드 - 샘플 콘텐츠로 작동합니다")
 
 if not api_key_valid:
-    with st.expander("💡 API 키 설정 방법"):
+    with st.expander("💡 API 키 설정 방법 (무료 옵션 있음!)"):
         st.markdown("""
-        **옵션 1: Google Gemini (추천 - 무료)**
+        **🎉 옵션 1: Groq (완전 무료, 추천!)**
+        
+        Streamlit Cloud Secrets에 추가:
+        ```
+        GROQ_API_KEY = "your-groq-api-key"
+        ```
+        
+        API 키 발급 (30초 소요):
+        1. https://console.groq.com 접속
+        2. 이메일로 가입 (무료)
+        3. API Keys 메뉴에서 "Create API Key" 클릭
+        4. 생성된 키 복사
+        
+        **특징:**
+        - ✅ 완전 무료
+        - ✅ 매우 빠른 속도
+        - ✅ Llama 3.1 70B 모델 사용
+        - ✅ 신용카드 불필요
+        
+        ---
+        
+        **옵션 2: Google Gemini**
         
         Streamlit Cloud Secrets에 추가:
         ```
@@ -158,14 +184,11 @@ if not api_key_valid:
         ```
         
         API 키 발급:
-        1. https://aistudio.google.com/app/apikey 접속
-        2. "Create API key" 클릭
-        3. Google Workspace 계정으로 로그인
-        4. 생성된 키 복사
+        - https://aistudio.google.com/app/apikey
         
         ---
         
-        **옵션 2: OpenAI (유료)**
+        **옵션 3: OpenAI (유료)**
         
         Streamlit Cloud Secrets에 추가:
         ```
@@ -175,12 +198,6 @@ if not api_key_valid:
         API 키 발급:
         - https://platform.openai.com/api-keys
         - 결제 정보 등록 필요
-        
-        ---
-        
-        **주의:**
-        - Gemini는 Google Workspace 계정으로 무료 사용 가능
-        - OpenAI는 사용량에 따라 과금됨
         """)
 
 st.markdown("---")
@@ -365,7 +382,7 @@ with left_col:
                     contents = agent.generate_content(
                         template=selected_template,
                         config=config,
-                        use_mock=(not openai_key and not gemini_key)
+                        use_mock=(not openai_key and not gemini_key and not groq_key)
                     )
                     
                     st.session_state.generated_contents = contents
@@ -377,7 +394,7 @@ with left_col:
                         "timestamp": datetime.now().isoformat()
                     })
                     
-                    if not openai_key and not gemini_key:
+                    if not openai_key and not gemini_key and not groq_key:
                         st.warning("⚠️ 데모 모드: API 키가 없어 샘플 콘텐츠를 생성했습니다.")
                     
                     st.success(f"✅ {len(contents)}개 완료! ({api_provider or '데모'} 사용)")
