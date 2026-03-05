@@ -40,25 +40,9 @@ st.markdown("""
         margin-bottom: 0rem !important;
     }
     
-    /* 왼쪽 패널 */
-    .left-panel {
-        background: #f8f9fa;
-        padding: 1.5rem;
-        border-radius: 10px;
-        height: calc(100vh - 120px);
-        overflow-y: auto;
-        margin-top: 0 !important;
-    }
+    /* 왼쪽 패널 스타일 제거 - 직접 적용 안 함 */
     
-    /* 오른쪽 콘텐츠 영역 */
-    .content-area {
-        background: white;
-        padding: 2rem;
-        border-radius: 10px;
-        border: 1px solid #e0e0e0;
-        min-height: calc(100vh - 120px);
-        margin-top: 0 !important;
-    }
+    /* 오른쪽 콘텐츠 영역 스타일 제거 - 직접 적용 안 함 */
     
     /* 섹션 구분선 */
     .section-divider {
@@ -144,12 +128,10 @@ st.markdown("""
 openai_key = os.getenv("OPENAI_API_KEY")
 
 # 메인 레이아웃: 왼쪽 1/4, 오른쪽 3/4
-left_col, right_col = st.columns([1, 3])
+left_col, right_col = st.columns([1, 3], gap="small")
 
 # ========== 왼쪽: 입력 패널 ==========
 with left_col:
-    st.markdown('<div class="left-panel">', unsafe_allow_html=True)
-    
     # 1. 템플릿 선택
     st.subheader("1️⃣ 템플릿")
     
@@ -333,12 +315,9 @@ with left_col:
             st.session_state.generated_contents = []
             st.session_state.selected_template = None
             st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== 오른쪽: 결과 패널 ==========
 with right_col:
-    st.markdown('<div class="content-area">', unsafe_allow_html=True)
     
     if not st.session_state.generated_contents:
         st.markdown("""
@@ -473,5 +452,4 @@ with right_col:
                     st.success("✅ 트위터 완료 (미리보기)")
                 if post_linkedin:
                     st.success("✅ LinkedIn 완료 (미리보기)")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+
