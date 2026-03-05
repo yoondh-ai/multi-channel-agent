@@ -14,7 +14,7 @@ class ContentResearcher:
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 self.llm = ChatGoogleGenerativeAI(
-                    model="models/gemini-1.5-flash-latest",
+                    model="gemini-1.5-flash",
                     temperature=0.7,
                     google_api_key=gemini_key,
                     convert_system_message_to_human=True
