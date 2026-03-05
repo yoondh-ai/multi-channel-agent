@@ -1,5 +1,6 @@
 """고급 콘텐츠 생성 모듈"""
 import os
+from langchain_core.prompts import ChatPromptTemplate
 
 class AdvancedContentGenerator:
     def __init__(self):
@@ -98,8 +99,6 @@ SEO 최적화: {config.get('include_seo', True)}
     
     def _generate_blog_post(self, context: str, research: dict) -> dict:
         """블로그 포스트 생성"""
-        
-        from langchain_core.prompts import ChatPromptTemplate
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", """당신은 B2B 마케팅 콘텐츠 전문가입니다.
