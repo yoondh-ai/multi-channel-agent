@@ -14,9 +14,10 @@ class AdvancedContentGenerator:
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 self.llm = ChatGoogleGenerativeAI(
-                    model="gemini-pro",
+                    model="models/gemini-1.5-flash-latest",
                     temperature=0.8,
-                    google_api_key=gemini_key
+                    google_api_key=gemini_key,
+                    convert_system_message_to_human=True
                 )
                 self.api_provider = "gemini"
             except Exception as e:
