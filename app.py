@@ -127,29 +127,39 @@ st.markdown("""
 # API 상태
 openai_key = os.getenv("OPENAI_API_KEY")
 
-# API 상태 표시
+# API 키 유효성 간단 체크
+api_key_valid = False
 if openai_key:
-    st.success("✅ AI 엔진 연결됨 - 실제 콘텐츠 생성 가능")
+    # 기본 형식 체크
+    if openai_key.startswith("sk-") and len(openai_key) > 20:
+        api_key_valid = True
+        st.success("✅ AI 엔진 연결됨 - 실제 콘텐츠 생성 가능")
+    else:
+        st.error("❌ OpenAI API 키 형식이 올바르지 않습니다")
+        openai_key = None  # 잘못된 키는 None으로 처리
 else:
-    st.warning("⚠️ 데모 모드 - OpenAI API 키를 설정하면 실제 AI 콘텐츠를 생성할 수 있습니다")
-    with st.expander("API 키 설정 방법"):
+    st.warning("⚠️ 데모 모드 - 샘플 콘텐츠로 작동합니다")
+
+if not api_key_valid:
+    with st.expander("💡 API 키 설정 방법"):
         st.markdown("""
         **Streamlit Cloud에서 설정:**
-        1. 앱 관리 페이지 접속
+        1. 앱 우측 하단 "Manage app" 클릭
         2. Settings → Secrets 클릭
-        3. 다음 내용 추가:
+        3. 다음 형식으로 입력:
         ```
-        OPENAI_API_KEY = "sk-proj-your-key-here"
+        OPENAI_API_KEY = "sk-proj-실제키입력"
         ```
         4. Save 후 앱 재시작
         
-        **로컬에서 설정:**
-        1. `.env` 파일 생성
-        2. `OPENAI_API_KEY=sk-proj-your-key-here` 추가
-        3. 앱 재시작
-        
         **API 키 발급:**
         - https://platform.openai.com/api-keys
+        - "Create new secret key" 클릭
+        - 생성된 키 복사 (한 번만 표시됨!)
+        
+        **주의:**
+        - 키는 `sk-proj-` 또는 `sk-`로 시작해야 합니다
+        - 공백이나 따옴표 없이 키만 입력하세요
         """)
 
 st.markdown("---")
@@ -353,7 +363,22 @@ with left_col:
                     st.rerun()
                     
                 except Exception as e:
-                    st.error(f"오류: {str(e)}")
+                    error_msg = str(e)
+                    
+                    # API 키 오류 처리
+                    if "401" in error_msg or "invalid_api_key" in error_msg:
+                        st.error("❌ OpenAI API 키가 유효하지 않습니다.")
+                        st.info("""
+                        **해결 방법:**
+                        1. https://platform.openai.com/api-keys 에서 새 API 키 발급
+                        2. Streamlit Cloud Settings → Secrets에서 키 업데이트
+                        3. 앱 재시작
+                        
+                        **임시 해결:** 데모 모드로 계속하려면 Secrets에서 OPENAI_API_KEY를 삭제하세요.
+                        """)
+                    else:
+                        st.error(f"오류: {error_msg}")
+                        st.exception(e)
     
     if st.session_state.generated_contents:
         if st.button("🔄 새로 시작", use_container_width=True):
