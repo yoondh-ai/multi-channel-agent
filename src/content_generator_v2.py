@@ -1,19 +1,38 @@
 """고급 콘텐츠 생성 모듈"""
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
 import os
 
 class AdvancedContentGenerator:
     def __init__(self):
-        api_key = os.getenv("OPENAI_API_KEY")
-        if api_key:
-            self.llm = ChatOpenAI(
-                model="gpt-4o-mini",
-                temperature=0.8,
-                api_key=api_key
-            )
-        else:
-            self.llm = None
+        # OpenAI 또는 Gemini 선택
+        self.api_provider = None
+        self.llm = None
+        
+        gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        openai_key = os.getenv("OPENAI_API_KEY")
+        
+        if gemini_key:
+            try:
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                self.llm = ChatGoogleGenerativeAI(
+                    model="gemini-1.5-flash",
+                    temperature=0.8,
+                    google_api_key=gemini_key
+                )
+                self.api_provider = "gemini"
+            except Exception as e:
+                print(f"Gemini 초기화 실패: {e}")
+        
+        if not self.llm and openai_key:
+            try:
+                from langchain_openai import ChatOpenAI
+                self.llm = ChatOpenAI(
+                    model="gpt-4o-mini",
+                    temperature=0.8,
+                    api_key=openai_key
+                )
+                self.api_provider = "openai"
+            except Exception as e:
+                print(f"OpenAI 초기화 실패: {e}")
     
     def generate_by_template(self, template: str, research_data: dict, config: dict, variant: int = 0) -> dict:
         """템플릿에 따라 콘텐츠 생성"""
@@ -62,6 +81,8 @@ SEO 최적화: {config.get('include_seo', True)}
     
     def _generate_blog_post(self, context: str, research: dict) -> dict:
         """블로그 포스트 생성"""
+        
+        from langchain_core.prompts import ChatPromptTemplate
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", """당신은 B2B 마케팅 콘텐츠 전문가입니다.

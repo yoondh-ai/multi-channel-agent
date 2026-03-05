@@ -1,19 +1,40 @@
 """웹 리서치 및 트렌드 분석 모듈"""
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
 import os
 
 class ContentResearcher:
     def __init__(self):
-        api_key = os.getenv("OPENAI_API_KEY")
-        if api_key:
-            self.llm = ChatOpenAI(
-                model="gpt-4o-mini",
-                temperature=0.7,
-                api_key=api_key
-            )
-        else:
-            self.llm = None
+        # OpenAI 또는 Gemini 선택
+        self.api_provider = None
+        self.llm = None
+        
+        openai_key = os.getenv("OPENAI_API_KEY")
+        gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        
+        if gemini_key:
+            try:
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                self.llm = ChatGoogleGenerativeAI(
+                    model="gemini-1.5-flash",
+                    temperature=0.7,
+                    google_api_key=gemini_key
+                )
+                self.api_provider = "gemini"
+                print("✅ Gemini API 연결됨")
+            except Exception as e:
+                print(f"Gemini 초기화 실패: {e}")
+        
+        if not self.llm and openai_key:
+            try:
+                from langchain_openai import ChatOpenAI
+                self.llm = ChatOpenAI(
+                    model="gpt-4o-mini",
+                    temperature=0.7,
+                    api_key=openai_key
+                )
+                self.api_provider = "openai"
+                print("✅ OpenAI API 연결됨")
+            except Exception as e:
+                print(f"OpenAI 초기화 실패: {e}")
     
     def research_topic(self, keywords: str, direction: str, web_research_data: str = None) -> dict:
         """키워드와 방향성을 기반으로 콘텐츠 리서치"""
@@ -33,6 +54,8 @@ class ContentResearcher:
 웹 검색 정보:
 {web_research_data or '추가 검색 정보 없음'}
 """
+        
+        from langchain_core.prompts import ChatPromptTemplate
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", """당신은 B2B 보안 마케팅 전문가입니다. 
@@ -57,5 +80,6 @@ class ContentResearcher:
             "raw_research": response.content,
             "keywords": keywords,
             "direction": direction,
-            "web_data": web_research_data
+            "web_data": web_research_data,
+            "api_provider": self.api_provider
         }
