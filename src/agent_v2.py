@@ -3,6 +3,7 @@ from .researcher import ContentResearcher
 from .content_generator_v2 import AdvancedContentGenerator
 from .publishers import TwitterPublisher, BlogPublisher
 from .reference_analyzer import ReferenceAnalyzer
+from .web_researcher import WebResearcher
 
 class MarketingContentAgent:
     def __init__(self):
@@ -11,12 +12,25 @@ class MarketingContentAgent:
         self.twitter_publisher = TwitterPublisher()
         self.blog_publisher = BlogPublisher()
         self.reference_analyzer = ReferenceAnalyzer()
+        self.web_researcher = WebResearcher()
     
     def generate_content(self, template: str, config: dict, use_mock: bool = False) -> list:
         """템플릿과 설정에 따라 여러 버전의 콘텐츠 생성"""
         
         variants = config.get('variants', 3)
         contents = []
+        
+        # 웹 리서치 수행
+        web_research_data = None
+        if not use_mock:
+            print("🔍 웹 검색 중...")
+            web_research = self.web_researcher.research_topic(
+                keywords=config['keywords'],
+                description=config['description'],
+                industry=config.get('industry', '')
+            )
+            web_research_data = self.web_researcher.format_research_for_prompt(web_research)
+            config['web_research_data'] = web_research_data
         
         # 레퍼런스 분석
         reference_data = None
@@ -34,7 +48,8 @@ class MarketingContentAgent:
             # 실제 AI 모드
             research_data = self.researcher.research_topic(
                 config['keywords'],
-                config['description']
+                config['description'],
+                web_research_data=web_research_data
             )
             
             for i in range(variants):
