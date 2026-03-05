@@ -127,6 +127,33 @@ st.markdown("""
 # API 상태
 openai_key = os.getenv("OPENAI_API_KEY")
 
+# API 상태 표시
+if openai_key:
+    st.success("✅ AI 엔진 연결됨 - 실제 콘텐츠 생성 가능")
+else:
+    st.warning("⚠️ 데모 모드 - OpenAI API 키를 설정하면 실제 AI 콘텐츠를 생성할 수 있습니다")
+    with st.expander("API 키 설정 방법"):
+        st.markdown("""
+        **Streamlit Cloud에서 설정:**
+        1. 앱 관리 페이지 접속
+        2. Settings → Secrets 클릭
+        3. 다음 내용 추가:
+        ```
+        OPENAI_API_KEY = "sk-proj-your-key-here"
+        ```
+        4. Save 후 앱 재시작
+        
+        **로컬에서 설정:**
+        1. `.env` 파일 생성
+        2. `OPENAI_API_KEY=sk-proj-your-key-here` 추가
+        3. 앱 재시작
+        
+        **API 키 발급:**
+        - https://platform.openai.com/api-keys
+        """)
+
+st.markdown("---")
+
 # 메인 레이아웃: 왼쪽 1/4, 오른쪽 3/4
 left_col, right_col = st.columns([1, 3], gap="small")
 
@@ -318,6 +345,9 @@ with left_col:
                         "contents": contents,
                         "timestamp": datetime.now().isoformat()
                     })
+                    
+                    if not openai_key:
+                        st.warning("⚠️ 데모 모드: OpenAI API 키가 없어 샘플 콘텐츠를 생성했습니다. 실제 AI 생성을 위해서는 API 키를 설정하세요.")
                     
                     st.success(f"✅ {len(contents)}개 완료!")
                     st.rerun()
