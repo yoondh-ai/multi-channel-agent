@@ -142,36 +142,48 @@ with left_col:
         "🎯 광고": ["google_ads", "social_ads"]
     }
     
-    # 라디오 버튼으로 템플릿 선택
-    all_templates = []
-    template_labels = {}
+    # 카테고리별로 라디오 버튼 그룹 생성
+    selected_template = st.session_state.selected_template
     
     for category, templates in template_categories.items():
+        st.markdown(f"**{category}**")
+        
         for template_key in templates:
             template_info = CONTENT_TEMPLATES[template_key]
-            label = f"{category.split()[0]} {template_info['name']}"
-            all_templates.append(template_key)
-            template_labels[template_key] = label
-    
-    # 현재 선택된 템플릿의 인덱스 찾기
-    current_index = 0
-    if st.session_state.selected_template in all_templates:
-        current_index = all_templates.index(st.session_state.selected_template)
-    
-    selected_template = st.radio(
-        "템플릿 선택",
-        options=all_templates,
-        format_func=lambda x: template_labels[x],
-        index=current_index,
-        label_visibility="collapsed"
-    )
-    
-    st.session_state.selected_template = selected_template
+            
+            # 체크박스처럼 보이는 버튼
+            is_selected = (st.session_state.selected_template == template_key)
+            
+            col1, col2 = st.columns([0.1, 0.9])
+            with col1:
+                if is_selected:
+                    st.markdown("✅")
+                else:
+                    st.markdown("⬜")
+            
+            with col2:
+                if st.button(
+                    template_info['name'],
+                    key=f"tmpl_{template_key}",
+                    help=template_info['description'],
+                    use_container_width=True,
+                    type="primary" if is_selected else "secondary"
+                ):
+                    st.session_state.selected_template = template_key
+                    selected_template = template_key
+                    st.rerun()
+        
+        st.markdown("")  # 카테고리 간 간격
     
     # 선택된 템플릿 정보 표시
     if selected_template:
         template_info = CONTENT_TEMPLATES[selected_template]
-        st.info(f"**{template_info['name']}**\n\n{template_info['description']}")
+        st.success(f"✅ 선택됨: **{template_info['name']}**")
+        with st.expander("📋 템플릿 정보"):
+            st.write(template_info['description'])
+            st.write("**특징:**")
+            for feature in template_info['features']:
+                st.write(f"• {feature}")
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     
