@@ -1,0 +1,428 @@
+"""AWS Bedrock Claude 3.5 Sonnet 기반 콘텐츠 생성기"""
+import os
+import json
+import boto3
+from pathlib import Path
+from typing import Dict, List, Optional
+
+class BedrockContentGenerator:
+    """AWS Bedrock Claude 3.5 Sonnet을 사용한 고급 콘텐츠 생성기"""
+    
+    def __init__(self):
+        """Bedrock 클라이언트 초기화 및 가이드라인 로드"""
+        # AWS Bedrock 클라이언트 초기화
+        self.bedrock_runtime = None
+        self.model_id = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+        
+        # AWS 자격증명 확인
+        aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+        aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        aws_region = os.getenv("AWS_REGION", "us-east-1")
+        
+        if aws_access_key and aws_secret_key:
+            try:
+                self.bedrock_runtime = boto3.client(
+                    service_name='bedrock-runtime',
+                    region_name=aws_region,
+                    aws_access_key_id=aws_access_key,
+                    aws_secret_access_key=aws_secret_key
+                )
+                print("✅ AWS Bedrock 연결됨 (Claude 3.5 Sonnet)")
+            except Exception as e:
+                print(f"⚠️ Bedrock 초기화 실패: {e}")
+        
+        # 가이드라인 문서 로드
+        self.brand_guidelines = self._load_guidelines()
+    
+    def _load_guidelines(self) -> str:
+        """System Prompt로 사용할 가이드라인 문서 로드"""
+        guidelines = []
+        
+        # .kiro/steering/ 디렉토리의 모든 마크다운 파일 로드
+        steering_dir = Path(".kiro/steering")
+        
+        if steering_dir.exists():
+            for md_file in steering_dir.glob("*.md"):
+                try:
+                    with open(md_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        guidelines.append(f"## {md_file.stem}\n\n{content}")
+                except Exception as e:
+                    print(f"⚠️ {md_file} 로드 실패: {e}")
+        
+        if guidelines:
+            return "\n\n---\n\n".join(guidelines)
+        else:
+            # 기본 가이드라인
+            return """
+# MarkAny 브랜드 가이드라인
+
+## 브랜드 보이스
+- 전문적이면서도 접근 가능한 톤
+- 신뢰할 수 있고 혁신적인 이미지
+- 고객 가치 중심의 커뮤니케이션
+
+## 작성 원칙
+- 데이터 기반 작성
+- 완전한 재작성 (단순 키워드 교체 금지)
+- 고객 혜택 우선
+"""
+    
+    def _create_system_prompt(self, channel: str, framework: str) -> str:
+        """채널과 프레임워크에 맞는 System Prompt 생성"""
+        
+        system_prompt = f"""당신은 MarkAny의 전문 마케팅 콘텐츠 작성자입니다.
+
+# 브랜드 가이드라인 (반드시 준수)
+
+{self.brand_guidelines}
+
+# 작성 채널
+{channel}
+
+# 마케팅 프레임워크
+{framework}
+
+# 핵심 작성 원칙
+
+## 1. 데이터 기반 작성 (Data-Grounded)
+- 사용자가 제공한 소스 데이터에만 기반하여 작성
+- 외부 지식이나 가정을 추가하지 말 것
+- 주어진 데이터에 없는 내용은 작성하지 말 것
+
+## 2. 완전한 재작성 (Full Paraphrasing)
+- 단순히 키워드만 바꾸지 말 것
+- 문장 구조를 완전히 새로 구성
+- 동일한 의미를 다른 방식으로 표현
+- 원문의 흐름을 그대로 따르지 말 것
+
+## 3. Thinking Process (사고 과정)
+글을 쓰기 전 반드시 다음을 분석하고 정리:
+
+### 타겟 분석
+- 이 글의 주요 독자는 누구인가?
+- 그들의 주요 관심사와 니즈는?
+- 그들의 전문성 수준은?
+
+### 핵심 가치 정의
+- 이 글에서 전달할 핵심 메시지는?
+- 독자가 얻을 수 있는 구체적 가치는?
+- 왜 지금 이 내용이 중요한가?
+
+### 차별화 포인트
+- 이 콘텐츠만의 독특한 가치는?
+- 독자의 주목을 끌 요소는?
+- 어떻게 행동을 유도할 것인가?
+
+## 4. 작성 프로세스
+
+### Step 1: 분석 (내부 사고, 출력하지 않음)
+- 제공된 데이터 분석
+- 타겟 독자 파악
+- 핵심 메시지 추출
+- 채널 특성 고려
+
+### Step 2: 구조 설계 (내부 사고, 출력하지 않음)
+- 적절한 구조 선택
+- 섹션별 핵심 포인트 정리
+- 흐름 설계
+
+### Step 3: 작성 (실제 출력)
+- 브랜드 톤에 맞게 작성
+- 완전히 새로운 문장 구조
+- 구체적이고 명확한 표현
+- 고객 가치 중심
+
+### Step 4: 검증 (내부 사고, 출력하지 않음)
+- 데이터 기반인가?
+- 완전히 재작성되었는가?
+- 브랜드 가이드라인 준수했는가?
+- 채널 특성에 맞는가?
+
+# 출력 형식
+
+반드시 다음 형식으로 출력:
+
+```json
+{{
+  "thinking": {{
+    "target_audience": "타겟 독자 분석",
+    "core_value": "핵심 가치 정의",
+    "key_message": "전달할 핵심 메시지",
+    "differentiation": "차별화 포인트"
+  }},
+  "content": {{
+    "title": "제목 (해당되는 경우)",
+    "body": "본문 내용",
+    "cta": "행동 유도 문구"
+  }},
+  "metadata": {{
+    "tone": "사용된 톤",
+    "word_count": 글자 수,
+    "key_points": ["핵심 포인트 1", "핵심 포인트 2"]
+  }}
+}}
+```
+
+중요: 반드시 유효한 JSON 형식으로만 응답하세요.
+"""
+        return system_prompt
+    
+    def _create_user_prompt(self, source_data: Dict, config: Dict) -> str:
+        """사용자 프롬프트 생성 (소스 데이터를 최상단에 배치)"""
+        
+        user_prompt = f"""# 소스 데이터 (이 데이터에만 기반하여 작성)
+
+## 제품/서비스 정보
+제품명: {config.get('product_name', 'N/A')}
+
+## 핵심 특징
+{config.get('key_features', 'N/A')}
+
+## 타겟 키워드
+{config.get('keywords', 'N/A')}
+
+## 추가 정보
+{config.get('additional_context', '없음')}
+
+## 웹 리서치 데이터
+{source_data.get('web_research', '없음')}
+
+## 리서치 분석
+{source_data.get('research_analysis', '없음')}
+
+---
+
+# 작성 요구사항
+
+## 타겟 독자
+{config.get('audience', 'IT 담당자')}
+
+## 톤앤매너
+{config.get('tone', '전문적')}
+
+## 마케팅 프레임워크
+{config.get('framework', 'PAS')}
+
+## 콘텐츠 길이
+{config.get('length', '보통')}
+
+## 추가 옵션
+- SEO 최적화: {config.get('include_seo', True)}
+- CTA 포함: {config.get('include_cta', True)}
+
+---
+
+# 작성 지시
+
+위의 소스 데이터를 바탕으로, 다음 단계를 거쳐 콘텐츠를 작성하세요:
+
+1. **Thinking Process**: 타겟 분석, 핵심 가치 정의, 차별화 포인트 파악
+2. **완전한 재작성**: 문장 구조를 완전히 새로 구성 (단순 키워드 교체 금지)
+3. **데이터 기반**: 주어진 소스 데이터에만 기반 (외부 지식 추가 금지)
+4. **브랜드 톤 준수**: MarkAny 브랜드 가이드라인 준수
+
+반드시 JSON 형식으로 응답하세요.
+"""
+        return user_prompt
+    
+    def generate_content(
+        self,
+        template: str,
+        source_data: Dict,
+        config: Dict
+    ) -> Dict:
+        """콘텐츠 생성"""
+        
+        if not self.bedrock_runtime:
+            # Bedrock 사용 불가 시 폴백
+            return self._generate_fallback_content(template, config)
+        
+        try:
+            # 채널 정보
+            channel_info = self._get_channel_info(template)
+            
+            # System Prompt 생성
+            system_prompt = self._create_system_prompt(
+                channel_info['name'],
+                config.get('framework', 'PAS')
+            )
+            
+            # User Prompt 생성
+            user_prompt = self._create_user_prompt(source_data, config)
+            
+            # Claude 3.5 Sonnet 호출
+            response = self._invoke_claude(system_prompt, user_prompt)
+            
+            # 응답 파싱
+            result = self._parse_response(response, template)
+            
+            return result
+            
+        except Exception as e:
+            print(f"⚠️ Bedrock 생성 실패: {e}")
+            return self._generate_fallback_content(template, config)
+    
+    def _invoke_claude(self, system_prompt: str, user_prompt: str) -> str:
+        """Claude 3.5 Sonnet 호출"""
+        
+        # 요청 본문 구성
+        request_body = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 4096,
+            "temperature": 0.7,
+            "system": system_prompt,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": user_prompt
+                }
+            ]
+        }
+        
+        # API 호출
+        response = self.bedrock_runtime.invoke_model(
+            modelId=self.model_id,
+            body=json.dumps(request_body)
+        )
+        
+        # 응답 파싱
+        response_body = json.loads(response['body'].read())
+        
+        # 텍스트 추출
+        if 'content' in response_body and len(response_body['content']) > 0:
+            return response_body['content'][0]['text']
+        else:
+            raise Exception("응답에 content가 없습니다")
+    
+    def _parse_response(self, response: str, template: str) -> Dict:
+        """Claude 응답을 파싱하여 구조화된 데이터로 변환"""
+        
+        try:
+            # JSON 추출 (```json ... ``` 형식 처리)
+            if "```json" in response:
+                json_start = response.find("```json") + 7
+                json_end = response.find("```", json_start)
+                json_str = response[json_start:json_end].strip()
+            elif "```" in response:
+                json_start = response.find("```") + 3
+                json_end = response.find("```", json_start)
+                json_str = response[json_start:json_end].strip()
+            else:
+                json_str = response.strip()
+            
+            # JSON 파싱
+            data = json.loads(json_str)
+            
+            # 템플릿에 맞게 변환
+            if template == "blog_post":
+                return {
+                    "title": data['content'].get('title', '제목 없음'),
+                    "content": data['content'].get('body', ''),
+                    "platform": "blog",
+                    "thinking": data.get('thinking', {}),
+                    "metadata": data.get('metadata', {})
+                }
+            elif template == "twitter_thread":
+                # 본문을 트윗으로 분할
+                body = data['content'].get('body', '')
+                tweets = self._split_into_tweets(body)
+                return {
+                    "posts": tweets,
+                    "platform": "twitter",
+                    "thinking": data.get('thinking', {}),
+                    "metadata": data.get('metadata', {})
+                }
+            elif template == "linkedin_post":
+                return {
+                    "content": data['content'].get('body', ''),
+                    "platform": "linkedin",
+                    "thinking": data.get('thinking', {}),
+                    "metadata": data.get('metadata', {})
+                }
+            elif template == "marketing_email":
+                return {
+                    "subject": data['content'].get('title', '제목 없음'),
+                    "content": data['content'].get('body', ''),
+                    "platform": "email",
+                    "thinking": data.get('thinking', {}),
+                    "metadata": data.get('metadata', {})
+                }
+            else:
+                return {
+                    "content": data['content'].get('body', ''),
+                    "platform": template,
+                    "thinking": data.get('thinking', {}),
+                    "metadata": data.get('metadata', {})
+                }
+                
+        except json.JSONDecodeError as e:
+            print(f"⚠️ JSON 파싱 실패: {e}")
+            # 파싱 실패 시 원문 반환
+            return {
+                "content": response,
+                "platform": template,
+                "error": "JSON 파싱 실패"
+            }
+    
+    def _split_into_tweets(self, text: str) -> List[str]:
+        """긴 텍스트를 트윗으로 분할"""
+        tweets = []
+        paragraphs = text.split('\n\n')
+        
+        current_tweet = ""
+        for para in paragraphs:
+            if len(current_tweet) + len(para) + 2 <= 280:
+                current_tweet += para + "\n\n"
+            else:
+                if current_tweet:
+                    tweets.append(current_tweet.strip())
+                current_tweet = para + "\n\n"
+        
+        if current_tweet:
+            tweets.append(current_tweet.strip())
+        
+        return tweets if tweets else [text[:280]]
+    
+    def _get_channel_info(self, template: str) -> Dict:
+        """채널 정보 반환"""
+        channels = {
+            "blog_post": {
+                "name": "블로그 포스트",
+                "length": "1,500-2,500자",
+                "tone": "전문적, 교육적"
+            },
+            "twitter_thread": {
+                "name": "Twitter 스레드",
+                "length": "3-7개 트윗",
+                "tone": "간결, 임팩트"
+            },
+            "linkedin_post": {
+                "name": "LinkedIn 포스트",
+                "length": "800-1,200자",
+                "tone": "전문적, 인사이트 중심"
+            },
+            "marketing_email": {
+                "name": "마케팅 이메일",
+                "length": "500-800자",
+                "tone": "친근하면서 전문적"
+            }
+        }
+        return channels.get(template, {"name": template, "length": "보통", "tone": "전문적"})
+    
+    def _generate_fallback_content(self, template: str, config: Dict) -> Dict:
+        """Bedrock 사용 불가 시 폴백 콘텐츠"""
+        product_name = config.get('product_name', 'MarkAny 솔루션')
+        
+        return {
+            "title": f"{product_name} 소개",
+            "content": f"""# {product_name}
+
+{config.get('key_features', '혁신적인 보안 솔루션')}
+
+{config.get('additional_context', '')}
+
+지금 바로 문의하세요!""",
+            "platform": template,
+            "note": "Bedrock 사용 불가 - 폴백 콘텐츠"
+        }

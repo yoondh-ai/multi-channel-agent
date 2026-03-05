@@ -1,14 +1,25 @@
 """개선된 마케팅 콘텐츠 생성 에이전트"""
 from .researcher import ContentResearcher
 from .content_generator_v2 import AdvancedContentGenerator
+from .bedrock_generator import BedrockContentGenerator
 from .publishers import TwitterPublisher, BlogPublisher
 from .reference_analyzer import ReferenceAnalyzer
 from .web_researcher import WebResearcher
+import os
 
 class MarketingContentAgent:
     def __init__(self):
         self.researcher = ContentResearcher()
-        self.generator = AdvancedContentGenerator()
+        
+        # Bedrock 우선, 폴백으로 기존 생성기
+        self.use_bedrock = bool(os.getenv("AWS_ACCESS_KEY_ID"))
+        if self.use_bedrock:
+            self.generator = BedrockContentGenerator()
+            print("🚀 AWS Bedrock Claude 3.5 Sonnet 사용")
+        else:
+            self.generator = AdvancedContentGenerator()
+            print("⚡ Groq/Gemini/OpenAI 사용")
+        
         self.twitter_publisher = TwitterPublisher()
         self.blog_publisher = BlogPublisher()
         self.reference_analyzer = ReferenceAnalyzer()
@@ -22,6 +33,7 @@ class MarketingContentAgent:
         
         # 웹 리서치 수행
         web_research_data = None
+        web_research_formatted = None
         if not use_mock:
             print("🔍 웹 검색 중...")
             web_research = self.web_researcher.research_topic(
@@ -29,8 +41,9 @@ class MarketingContentAgent:
                 description=config['description'],
                 industry=config.get('industry', '')
             )
-            web_research_data = self.web_researcher.format_research_for_prompt(web_research)
-            config['web_research_data'] = web_research_data
+            web_research_formatted = self.web_researcher.format_research_for_prompt(web_research)
+            web_research_data = web_research
+            config['web_research_data'] = web_research_formatted
         
         # 레퍼런스 분석
         reference_data = None
@@ -45,21 +58,43 @@ class MarketingContentAgent:
                 content = self._generate_mock_content(template, config, i)
                 contents.append(content)
         else:
-            # 실제 AI 모드
-            research_data = self.researcher.research_topic(
-                config['keywords'],
-                config['description'],
-                web_research_data=web_research_data
-            )
-            
-            for i in range(variants):
-                content = self.generator.generate_by_template(
-                    template=template,
-                    research_data=research_data,
-                    config=config,
-                    variant=i
+            # Bedrock 사용 여부에 따라 분기
+            if self.use_bedrock:
+                # AWS Bedrock Claude 3.5 Sonnet 사용
+                print("🤖 Claude 3.5 Sonnet으로 콘텐츠 생성 중...")
+                
+                # 소스 데이터 구성 (최상단에 배치)
+                source_data = {
+                    "web_research": web_research_formatted or "없음",
+                    "research_analysis": "웹 검색 결과를 바탕으로 작성",
+                    "reference": reference_data
+                }
+                
+                # 여러 버전 생성
+                for i in range(variants):
+                    print(f"  버전 {i+1}/{variants} 생성 중...")
+                    content = self.generator.generate_content(
+                        template=template,
+                        source_data=source_data,
+                        config=config
+                    )
+                    contents.append(content)
+            else:
+                # 기존 방식 (Groq/Gemini/OpenAI)
+                research_data = self.researcher.research_topic(
+                    config['keywords'],
+                    config['description'],
+                    web_research_data=web_research_formatted
                 )
-                contents.append(content)
+                
+                for i in range(variants):
+                    content = self.generator.generate_by_template(
+                        template=template,
+                        research_data=research_data,
+                        config=config,
+                        variant=i
+                    )
+                    contents.append(content)
         
         return contents
     

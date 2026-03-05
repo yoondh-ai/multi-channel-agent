@@ -196,10 +196,15 @@ if 'current_tone' not in st.session_state:
 groq_key = os.getenv("GROQ_API_KEY")
 gemini_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 openai_key = os.getenv("OPENAI_API_KEY")
+aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 
-api_available = bool(groq_key or gemini_key or openai_key)
+api_available = bool(groq_key or gemini_key or openai_key or (aws_access_key and aws_secret_key))
 api_provider = None
-if groq_key:
+
+if aws_access_key and aws_secret_key:
+    api_provider = "AWS Bedrock (Claude 3.5 Sonnet)"
+elif groq_key:
     api_provider = "Groq (무료)"
 elif gemini_key:
     api_provider = "Gemini"
@@ -269,7 +274,24 @@ with st.sidebar:
         st.warning("⚠️ 데모 모드")
         with st.expander("API 설정"):
             st.markdown("""
-            **Groq (무료 추천)**
+            **AWS Bedrock (Claude 3.5 Sonnet 추천!)**
+            
+            Secrets에 추가:
+            ```
+            AWS_ACCESS_KEY_ID = "your-access-key"
+            AWS_SECRET_ACCESS_KEY = "your-secret-key"
+            AWS_REGION = "us-east-1"
+            ```
+            
+            특징:
+            - 🎯 브랜드 가이드라인 완벽 학습
+            - 🧠 Thinking Process 포함
+            - 📊 데이터 기반 작성 (Grounding)
+            - ✍️ 완전한 재작성 (Paraphrasing)
+            
+            ---
+            
+            **또는 Groq (무료)**
             1. https://console.groq.com
             2. API 키 발급
             3. Secrets에 추가:
@@ -343,7 +365,10 @@ with left_col:
                 try:
                     # 설정 구성
                     config = {
+                        "product_name": product_name,
+                        "key_features": key_features,
                         "keywords": keywords or product_name,
+                        "additional_context": additional_context,
                         "description": f"""
 제품명: {product_name}
 
@@ -442,6 +467,24 @@ with right_col:
                 
                 for ver_idx, (ver_tab, content) in enumerate(zip(version_tabs, contents)):
                     with ver_tab:
+                        # Thinking Process 표시 (Bedrock 사용 시)
+                        if 'thinking' in content and content['thinking']:
+                            with st.expander("🧠 AI Thinking Process", expanded=False):
+                                thinking = content['thinking']
+                                st.markdown(f"""
+**타겟 독자 분석:**
+{thinking.get('target_audience', 'N/A')}
+
+**핵심 가치:**
+{thinking.get('core_value', 'N/A')}
+
+**핵심 메시지:**
+{thinking.get('key_message', 'N/A')}
+
+**차별화 포인트:**
+{thinking.get('differentiation', 'N/A')}
+""")
+                        
                         # 메트릭
                         col1, col2, col3 = st.columns(3)
                         with col1:
