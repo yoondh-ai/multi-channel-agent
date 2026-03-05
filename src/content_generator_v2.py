@@ -14,7 +14,7 @@ class AdvancedContentGenerator:
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 self.llm = ChatGoogleGenerativeAI(
-                    model="gemini-1.5-flash",
+                    model="gemini-pro",
                     temperature=0.8,
                     google_api_key=gemini_key
                 )
