@@ -195,13 +195,13 @@ else:
 
 st.markdown("---")
 
-# ========== 메인 레이아웃: 좌우 분할 ==========
-left_col, right_col = st.columns([1, 1], gap="large")
+# ========== 메인 레이아웃: 좌우 분할 (1:1.2) ==========
+left_col, right_col = st.columns([1, 1.2], gap="large")
 
-# ========== 좌측: 입력 폼 ==========
+# ========== 좌측: 콘텐츠 기획 폼 ==========
 with left_col:
     st.markdown('<div class="input-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">📝 콘텐츠 정보 입력</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📝 콘텐츠 기획</div>', unsafe_allow_html=True)
     
     # 제품/서비스명
     product_name = st.text_input(
@@ -423,15 +423,18 @@ with right_col:
                         # 편집 가능한 콘텐츠
                         edit_key = f"{channel_name}_{ver_idx}"
                         
-                        # 제목 (있는 경우)
+                        # 제목 (있는 경우) - 마크다운으로 표시
                         if 'title' in content:
                             if edit_key not in st.session_state.edited_contents:
                                 st.session_state.edited_contents[edit_key] = {}
                             
-                            edited_title = st.text_input(
-                                "제목",
+                            st.markdown("### 📌 제목")
+                            edited_title = st.text_area(
+                                "제목 편집",
                                 value=st.session_state.edited_contents[edit_key].get('title', content['title']),
-                                key=f"title_{edit_key}"
+                                height=80,
+                                key=f"title_{edit_key}",
+                                label_visibility="collapsed"
                             )
                             st.session_state.edited_contents[edit_key]['title'] = edited_title
                         
@@ -439,23 +442,41 @@ with right_col:
                             if edit_key not in st.session_state.edited_contents:
                                 st.session_state.edited_contents[edit_key] = {}
                             
-                            edited_subject = st.text_input(
-                                "이메일 제목",
+                            st.markdown("### 📧 이메일 제목")
+                            edited_subject = st.text_area(
+                                "이메일 제목 편집",
                                 value=st.session_state.edited_contents[edit_key].get('subject', content['subject']),
-                                key=f"subject_{edit_key}"
+                                height=80,
+                                key=f"subject_{edit_key}",
+                                label_visibility="collapsed"
                             )
                             st.session_state.edited_contents[edit_key]['subject'] = edited_subject
                         
-                        # 본문
+                        # 본문 - 마크다운 미리보기 + 편집
                         if 'content' in content:
                             if edit_key not in st.session_state.edited_contents:
                                 st.session_state.edited_contents[edit_key] = {}
                             
+                            st.markdown("### 📄 본문")
+                            
+                            # 미리보기/편집 토글
+                            col_toggle1, col_toggle2 = st.columns(2)
+                            with col_toggle1:
+                                show_preview = st.checkbox("미리보기", value=False, key=f"preview_{edit_key}")
+                            
+                            if show_preview:
+                                # 마크다운 미리보기
+                                st.markdown("---")
+                                st.markdown(st.session_state.edited_contents[edit_key].get('content', content['content']))
+                                st.markdown("---")
+                            
+                            # 편집 영역 (충분한 높이)
                             edited_content = st.text_area(
-                                "본문 (직접 수정 가능)",
+                                "본문 편집 (직접 수정 가능)",
                                 value=st.session_state.edited_contents[edit_key].get('content', content['content']),
-                                height=400,
-                                key=f"content_{edit_key}"
+                                height=500,
+                                key=f"content_{edit_key}",
+                                help="마크다운 형식을 지원합니다. **굵게**, *기울임*, # 제목 등을 사용할 수 있습니다."
                             )
                             st.session_state.edited_contents[edit_key]['content'] = edited_content
                         
@@ -464,12 +485,15 @@ with right_col:
                             if edit_key not in st.session_state.edited_contents:
                                 st.session_state.edited_contents[edit_key] = {'posts': content['posts'].copy()}
                             
+                            st.markdown("### 🐦 트위터 스레드")
                             for post_idx, post in enumerate(content['posts']):
+                                st.markdown(f"**트윗 {post_idx + 1}**")
                                 edited_post = st.text_area(
-                                    f"트윗 {post_idx + 1} (직접 수정 가능)",
+                                    f"트윗 {post_idx + 1} 편집",
                                     value=st.session_state.edited_contents[edit_key]['posts'][post_idx],
-                                    height=100,
-                                    key=f"post_{edit_key}_{post_idx}"
+                                    height=150,
+                                    key=f"post_{edit_key}_{post_idx}",
+                                    label_visibility="collapsed"
                                 )
                                 st.session_state.edited_contents[edit_key]['posts'][post_idx] = edited_post
                         
