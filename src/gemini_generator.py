@@ -11,22 +11,31 @@ class GeminiContentGenerator:
     def __init__(self):
         """Gemini 초기화 및 가이드라인 로드"""
         self.model = None
+        self.model_name = None
         
         # Streamlit Secrets에서 API 키 가져오기
         try:
             api_key = st.secrets["GEMINI_API_KEY"]
             genai.configure(api_key=api_key)
             
+            # 사용 가능한 최적 모델 자동 선택
+            self.model_name = self._select_best_model()
+            
+            if not self.model_name:
+                print("⚠️ 사용 가능한 Gemini 모델을 찾을 수 없습니다")
+                self.model = None
+                return
+            
             # 브랜드 가이드라인 로드
             self.brand_guidelines = self._load_brand_guidelines()
             
             # Gemini 모델 초기화 (system_instruction 포함)
             self.model = genai.GenerativeModel(
-                model_name='gemini-1.5-flash',
+                model_name=self.model_name,
                 system_instruction=self._create_system_instruction()
             )
             
-            print("✅ Gemini 1.5 Flash 연결됨 (무료)")
+            print(f"✅ Gemini {self.model_name} 연결됨 (무료)")
             
         except KeyError:
             print("⚠️ GEMINI_API_KEY가 st.secrets에 없습니다")
@@ -34,6 +43,50 @@ class GeminiContentGenerator:
         except Exception as e:
             print(f"⚠️ Gemini 초기화 실패: {e}")
             self.model = None
+    
+    def _select_best_model(self) -> str:
+        """사용 가능한 최적의 Gemini 모델 자동 선택"""
+        
+        # 우선순위 순서로 시도할 모델 목록
+        preferred_models = [
+            'gemini-2.0-flash-exp',      # 최신 실험 버전
+            'gemini-2.0-flash',           # Gemini 2.0 안정 버전
+            'gemini-1.5-flash-latest',    # 1.5 최신 버전
+            'gemini-1.5-flash',           # 1.5 기본 버전
+            'gemini-1.5-flash-002',       # 1.5 특정 버전
+            'gemini-pro',                 # 폴백 옵션
+        ]
+        
+        try:
+            # 사용 가능한 모델 목록 가져오기
+            available_models = genai.list_models()
+            available_model_names = [
+                model.name.replace('models/', '') 
+                for model in available_models 
+                if 'generateContent' in model.supported_generation_methods
+            ]
+            
+            print(f"📋 사용 가능한 모델: {', '.join(available_model_names[:5])}...")
+            
+            # 우선순위에 따라 사용 가능한 모델 선택
+            for preferred in preferred_models:
+                if preferred in available_model_names:
+                    print(f"✅ 선택된 모델: {preferred}")
+                    return preferred
+            
+            # 우선순위 목록에 없으면 첫 번째 사용 가능한 모델 선택
+            if available_model_names:
+                selected = available_model_names[0]
+                print(f"⚠️ 기본 모델 사용: {selected}")
+                return selected
+            
+            return None
+            
+        except Exception as e:
+            print(f"⚠️ 모델 목록 조회 실패: {e}")
+            # 실패 시 기본 모델 사용
+            print("⚠️ 기본 모델 'gemini-1.5-flash' 사용 시도")
+            return 'gemini-1.5-flash'
     
     def _load_brand_guidelines(self) -> str:
         """브랜드 가이드라인 문서 로드"""

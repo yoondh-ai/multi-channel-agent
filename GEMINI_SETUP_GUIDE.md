@@ -1,16 +1,41 @@
-# 🎯 Gemini 1.5 Flash 설정 가이드
+# 🎯 Gemini 2.0 Flash 설정 가이드
 
 ## ✨ 완전히 새로운 버전!
 
-이 프로젝트는 **Gemini 1.5 Flash**로 완전히 업그레이드되었습니다!
+이 프로젝트는 **Gemini 2.0 Flash**로 완전히 업그레이드되었습니다!
 
 ### 주요 변경사항
-- ✅ **Gemini 1.5 Flash 전용**: `google-generativeai` 라이브러리 사용
+- ✅ **Gemini 2.0 Flash 자동 선택**: 최신 모델 자동 감지
+- ✅ **모델 폴백 로직**: 사용 불가 시 자동으로 다른 모델 선택
 - ✅ **st.secrets 통합**: 보안을 위해 Streamlit Secrets 사용
 - ✅ **브랜드 가이드라인 학습**: `.kiro/steering/` 문서를 system_instruction에 주입
 - ✅ **Jasper 스타일 UI**: 좌우 분할 레이아웃
 - ✅ **직접 수정 가능**: st.text_area로 결과물 편집
 - ✅ **발행 기능**: 각 채널별 발행 버튼 추가
+
+## 🔄 자동 모델 선택
+
+### 우선순위 순서
+1. `gemini-2.0-flash-exp` (최신 실험 버전)
+2. `gemini-2.0-flash` (Gemini 2.0 안정 버전)
+3. `gemini-1.5-flash-latest` (1.5 최신 버전)
+4. `gemini-1.5-flash` (1.5 기본 버전)
+5. `gemini-1.5-flash-002` (1.5 특정 버전)
+6. `gemini-pro` (폴백 옵션)
+
+### 작동 방식
+```python
+# 1. 사용 가능한 모델 목록 조회
+available_models = genai.list_models()
+
+# 2. 우선순위에 따라 선택
+for preferred in preferred_models:
+    if preferred in available_models:
+        return preferred
+
+# 3. 없으면 첫 번째 사용 가능한 모델 선택
+return available_models[0]
+```
 
 ## 🚀 빠른 시작
 
@@ -55,10 +80,16 @@ GEMINI_API_KEY = "AIza여기에_복사한_키_붙여넣기"
 
 앱 실행 후:
 ```
-✅ Gemini 1.5 Flash (무료) 연결됨
+✅ Gemini gemini-2.0-flash 연결됨 (무료)
 ```
 
-메시지 확인!
+또는
+
+```
+✅ Gemini gemini-1.5-flash-latest 연결됨 (무료)
+```
+
+메시지 확인! (사용 가능한 모델에 따라 자동 선택됨)
 
 ## 📋 브랜드 가이드라인 설정
 
@@ -298,10 +329,10 @@ response = model.generate_content(user_prompt)
 
 ## 💰 비용
 
-### Gemini 1.5 Flash 무료 할당량
+### Gemini 2.0 Flash 무료 할당량
 - **분당**: 15 요청
 - **일일**: 1,500 요청
-- **월간**: 100만 토큰
+- **월간**: 100만 토큰 (무료)
 
 ### 예상 사용량
 - 블로그 포스트 1개: ~2,000 토큰
@@ -311,29 +342,40 @@ response = model.generate_content(user_prompt)
 **완전 무료!** 🎉
 
 ### 유료 플랜 (필요시)
-- $0.075 / 1M input tokens
-- $0.30 / 1M output tokens
+- Gemini 2.0 Flash: $0.075 / 1M input tokens, $0.30 / 1M output tokens
+- Gemini 1.5 Flash: $0.075 / 1M input tokens, $0.30 / 1M output tokens
 
 매우 저렴합니다!
 
 ## 🆚 비교
 
-| 항목 | Gemini 1.5 Flash | AWS Bedrock | Groq |
-|------|------------------|-------------|------|
-| 비용 | ✅ 무료 (100만 토큰/월) | ❌ 유료 | ✅ 무료 |
-| 설정 | ✅ API 키 1개 | ❌ IAM, 권한 등 | ✅ API 키 1개 |
-| 브랜드 학습 | ✅ system_instruction | ✅ System Prompt | ⚠️ 제한적 |
-| 한국어 | ✅ 우수 | 우수 | 우수 |
-| 속도 | ✅ 빠름 | 보통 | 매우 빠름 |
-| 안정성 | ✅ 높음 | 높음 | 보통 |
-| 추천 | ⭐⭐⭐⭐⭐ | 프로덕션 | 테스트 |
+| 항목 | Gemini 2.0 Flash | Gemini 1.5 Flash | AWS Bedrock | Groq |
+|------|------------------|------------------|-------------|------|
+| 비용 | ✅ 무료 (100만 토큰/월) | ✅ 무료 | ❌ 유료 | ✅ 무료 |
+| 설정 | ✅ API 키 1개 | ✅ API 키 1개 | ❌ IAM, 권한 등 | ✅ API 키 1개 |
+| 브랜드 학습 | ✅ system_instruction | ✅ system_instruction | ✅ System Prompt | ⚠️ 제한적 |
+| 한국어 | ✅ 우수 | ✅ 우수 | 우수 | 우수 |
+| 속도 | ✅ 매우 빠름 | ✅ 빠름 | 보통 | 매우 빠름 |
+| 안정성 | ✅ 높음 | ✅ 높음 | 높음 | 보통 |
+| 자동 선택 | ✅ 지원 | - | - | - |
+| 추천 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 프로덕션 | 테스트 |
 
 ## 🐛 문제 해결
+
+### "404 NOT_FOUND" 오류
+→ **자동 해결됨!** 코드가 자동으로 사용 가능한 모델 선택
+→ 로그에서 "✅ 선택된 모델: gemini-2.0-flash" 확인
+→ 여전히 오류 시 API 키 재확인
 
 ### "GEMINI_API_KEY가 설정되지 않았습니다"
 → Streamlit Secrets 확인
 → `.streamlit/secrets.toml` 파일 확인
 → 앱 재시작
+
+### "모델 목록 조회 실패"
+→ 인터넷 연결 확인
+→ API 키 유효성 확인
+→ 기본 모델로 폴백됨 (정상 작동)
 
 ### "API 할당량 초과"
 → 무료 할당량 확인 (100만 토큰/월)
@@ -358,13 +400,15 @@ response = model.generate_content(user_prompt)
 
 ## 🎉 결론
 
-Gemini 1.5 Flash는:
+Gemini 2.0 Flash는:
 - ✅ 완전 무료 (100만 토큰/월)
+- ✅ 자동 모델 선택 (404 오류 방지)
 - ✅ 브랜드 가이드라인 완벽 학습
 - ✅ Thinking Process 포함
 - ✅ 직접 수정 가능
 - ✅ 발행 기능 통합
 - ✅ 설정 간단 (API 키 1개)
+- ✅ 폴백 로직 (안정성 보장)
 
 **해커톤에 완벽합니다!** 🚀
 

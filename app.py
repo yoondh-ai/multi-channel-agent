@@ -155,7 +155,7 @@ if 'edited_contents' not in st.session_state:
 try:
     gemini_key = st.secrets["GEMINI_API_KEY"]
     api_available = True
-    api_provider = "Gemini 1.5 Flash (무료)"
+    api_provider = "Gemini (무료)"
 except KeyError:
     api_available = False
     api_provider = None
@@ -164,7 +164,7 @@ except KeyError:
 st.markdown("""
 <div class="main-header">
     <h1>✨ AI 마케팅 콘텐츠 생성</h1>
-    <p>Gemini 1.5 Flash - 브랜드 가이드라인 학습 완료</p>
+    <p>Gemini 2.0 Flash - 브랜드 가이드라인 학습 완료</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -549,6 +549,6 @@ with right_col:
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #9ca3af; padding: 2rem;">
-    <p>Made with ❤️ for AI Hackathon | Powered by Gemini 1.5 Flash</p>
+    <p>Made with ❤️ for AI Hackathon | Powered by Gemini 2.0 Flash</p>
 </div>
 """, unsafe_allow_html=True)
